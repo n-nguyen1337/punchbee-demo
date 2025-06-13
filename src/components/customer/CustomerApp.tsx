@@ -213,7 +213,7 @@ const CustomerApp = () => {
             <div className="mx-auto h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
               <Gift className="h-6 w-6 text-white" />
             </div>
-            <CardTitle className="text-2xl">Welcome to LoyaltyPro</CardTitle>
+            <CardTitle className="text-2xl">Welcome to PunchBee</CardTitle>
             <CardDescription>
               Sign in with your phone number to access your loyalty cards
             </CardDescription>

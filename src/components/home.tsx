@@ -96,7 +96,7 @@ const HomePage = () => {
                 <Gift className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">LoyaltyPro</h1>
+                <h1 className="text-xl font-bold text-gray-900">PunchBee</h1>
                 <p className="text-sm text-gray-500">
                   Digital Loyalty Cards for Small Business
                 </p>
@@ -273,7 +273,7 @@ const HomePage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Why Choose LoyaltyPro?
+                Why Choose PunchBee?
               </h2>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
@@ -357,7 +357,7 @@ const HomePage = () => {
             Ready to Ditch Paper Punch Cards?
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Join hundreds of businesses already using LoyaltyPro to reward their
+            Join hundreds of businesses already using PunchBee to reward their
             customers
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -387,14 +387,14 @@ const HomePage = () => {
                 <Gift className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="font-bold">LoyaltyPro</h3>
+                <h3 className="font-bold">PunchBee</h3>
                 <p className="text-sm text-gray-400">
                   Digital loyalty made simple
                 </p>
               </div>
             </div>
             <div className="text-sm text-gray-400">
-              © 2023 LoyaltyPro. All rights reserved.
+              © 2023 PunchBee. All rights reserved.
             </div>
           </div>
         </div>
