@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -93,35 +94,7 @@ const BusinessDashboard = () => {
     null,
   );
 
-  // Mock data - in real app this would come from Supabase
-  const [programs, setPrograms] = useState<LoyaltyProgram[]>([
-    {
-      id: "1",
-      name: "Coffee Lovers Club",
-      description: "Buy 10 coffees, get 1 free!",
-      punchesRequired: 10,
-      rewardDescription: "Free coffee of your choice",
-      isActive: true,
-      qrCodeData: "loyalty-program-1",
-      customersEnrolled: 156,
-      totalPunches: 1240,
-      rewardsRedeemed: 89,
-      createdAt: new Date("2023-01-15"),
-    },
-    {
-      id: "2",
-      name: "Pastry Paradise",
-      description: "Buy 5 pastries, get 1 free!",
-      punchesRequired: 5,
-      rewardDescription: "Free pastry of your choice",
-      isActive: true,
-      qrCodeData: "loyalty-program-2",
-      customersEnrolled: 89,
-      totalPunches: 445,
-      rewardsRedeemed: 67,
-      createdAt: new Date("2023-02-01"),
-    },
-  ]);
+  const [programs, setPrograms] = useState<LoyaltyProgram[]>([]);
 
   const [customers, setCustomers] = useState<Customer[]>([
     {
@@ -178,7 +151,34 @@ const BusinessDashboard = () => {
     rewardDescription: "",
   });
 
-  const handleCreateProgram = () => {
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      const { data, error } = await supabase
+        .from('loyalty_programs')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (!error && data) {
+        setPrograms(
+          data.map((p: any) => ({
+            id: p.id.toString(),
+            name: p.name,
+            description: p.description,
+            punchesRequired: p.punches_required,
+            rewardDescription: p.reward_description,
+            isActive: p.is_active,
+            qrCodeData: p.qr_code_data,
+            customersEnrolled: p.customers_enrolled || 0,
+            totalPunches: p.total_punches || 0,
+            rewardsRedeemed: p.rewards_redeemed || 0,
+            createdAt: new Date(p.created_at),
+          }))
+        );
+      }
+    }
+    fetchPrograms()
+  }, [])
+
+  const handleCreateProgram = async () => {
     if (
       !newProgram.name ||
       !newProgram.description ||
@@ -200,6 +200,15 @@ const BusinessDashboard = () => {
     };
 
     setPrograms([...programs, program]);
+    const { error } = await supabase.from('loyalty_programs').insert({
+      name: program.name,
+      description: program.description,
+      punches_required: program.punchesRequired,
+      reward_description: program.rewardDescription,
+      is_active: program.isActive,
+      qr_code_data: program.qrCodeData,
+    });
+    if (error) console.error(error);
     setNewProgram({
       name: "",
       description: "",

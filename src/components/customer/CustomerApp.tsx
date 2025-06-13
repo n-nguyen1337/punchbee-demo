@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -84,64 +85,68 @@ const CustomerApp = () => {
   );
   const [showQRCode, setShowQRCode] = useState(false);
 
-  // Mock customer data
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setIsAuthenticated(true);
+    });
+  }, []);
+
+  // Customer profile and loyalty cards fetched from Supabase
   const [customerProfile, setCustomerProfile] = useState<CustomerProfile>({
     id: "customer-1",
-    name: "Sarah Johnson",
-    phone: "+1 (555) 123-4567",
-    email: "sarah@example.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
-    joinedAt: new Date("2023-01-20"),
-    totalCards: 3,
-    totalPunches: 47,
-    totalRewards: 5,
+    name: "",
+    phone: "",
+    email: "",
+    avatar: "",
+    joinedAt: new Date(),
+    totalCards: 0,
+    totalPunches: 0,
+    totalRewards: 0,
   });
+  const [loyaltyCards, setLoyaltyCards] = useState<CustomerLoyaltyCard[]>([]);
 
-  const [loyaltyCards, setLoyaltyCards] = useState<CustomerLoyaltyCard[]>([
-    {
-      id: "card-1",
-      businessName: "Coffee Haven",
-      businessLogo:
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=coffeehaven",
-      programName: "Coffee Lovers Club",
-      description: "Buy 10 coffees, get 1 free!",
-      currentPunches: 7,
-      punchesRequired: 10,
-      rewardDescription: "Free coffee of your choice",
-      qrCodeData: "customer-card-1",
-      lastPunchDate: new Date("2023-06-15"),
-      joinedDate: new Date("2023-01-20"),
-      totalRewardsEarned: 2,
-    },
-    {
-      id: "card-2",
-      businessName: "Bella's Bakery",
-      businessLogo: "https://api.dicebear.com/7.x/avataaars/svg?seed=bakery",
-      programName: "Sweet Treats Club",
-      description: "Buy 5 pastries, get 1 free!",
-      currentPunches: 3,
-      punchesRequired: 5,
-      rewardDescription: "Free pastry of your choice",
-      qrCodeData: "customer-card-2",
-      lastPunchDate: new Date("2023-06-10"),
-      joinedDate: new Date("2023-02-15"),
-      totalRewardsEarned: 1,
-    },
-    {
-      id: "card-3",
-      businessName: "Fresh Juice Bar",
-      businessLogo: "https://api.dicebear.com/7.x/avataaars/svg?seed=juice",
-      programName: "Healthy Living Rewards",
-      description: "Buy 8 smoothies, get 1 free!",
-      currentPunches: 8,
-      punchesRequired: 8,
-      rewardDescription: "Free smoothie of your choice",
-      qrCodeData: "customer-card-3",
-      lastPunchDate: new Date("2023-06-14"),
-      joinedDate: new Date("2023-03-01"),
-      totalRewardsEarned: 2,
-    },
-  ]);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const load = async () => {
+      const { data: profile } = await supabase
+        .from('customers')
+        .select('*')
+        .single();
+      if (profile) {
+        setCustomerProfile({
+          id: profile.id,
+          name: profile.name,
+          phone: profile.phone,
+          email: profile.email,
+          avatar: profile.avatar_url,
+          joinedAt: new Date(profile.joined_at),
+          totalCards: profile.total_cards || 0,
+          totalPunches: profile.total_punches || 0,
+          totalRewards: profile.total_rewards || 0,
+        });
+      }
+      const { data: cards } = await supabase.from('customer_cards').select('*');
+      if (cards) {
+        setLoyaltyCards(
+          cards.map((c: any) => ({
+            id: c.id,
+            businessName: c.business_name,
+            businessLogo: c.business_logo,
+            programName: c.program_name,
+            description: c.description,
+            currentPunches: c.current_punches,
+            punchesRequired: c.punches_required,
+            rewardDescription: c.reward_description,
+            qrCodeData: c.qr_code_data,
+            lastPunchDate: c.last_punch_date ? new Date(c.last_punch_date) : undefined,
+            joinedDate: new Date(c.joined_date),
+            totalRewardsEarned: c.total_rewards_earned || 0,
+          }))
+        );
+      }
+    };
+    load();
+  }, [isAuthenticated]);
 
   const [notifications, setNotifications] = useState<Notification[]>([
     {
@@ -170,26 +175,37 @@ const CustomerApp = () => {
     },
   ]);
 
-  const handlePhoneLogin = () => {
+  const handlePhoneLogin = async () => {
     if (!phoneNumber) {
       toast.error("Please enter your phone number");
       return;
     }
     setIsVerifying(true);
-    // Simulate sending verification code
-    setTimeout(() => {
+    const { error } = await supabase.auth.signInWithOtp({ phone: phoneNumber });
+    if (error) {
+      toast.error(error.message);
+      setIsVerifying(false);
+    } else {
       toast.success("Verification code sent!");
-    }, 1000);
+    }
   };
 
-  const handleVerifyCode = () => {
+  const handleVerifyCode = async () => {
     if (!verificationCode) {
       toast.error("Please enter the verification code");
       return;
     }
-    // Simulate verification
-    setIsAuthenticated(true);
-    toast.success("Welcome back!");
+    const { error } = await supabase.auth.verifyOtp({
+      phone: phoneNumber,
+      token: verificationCode,
+      type: "sms",
+    });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setIsAuthenticated(true);
+      toast.success("Welcome back!");
+    }
   };
 
   const handleAddToWallet = (card: CustomerLoyaltyCard) => {
